@@ -79,16 +79,3 @@ Growth_rate_graph
 Cleaned_Policy_data <- kable(Policy_Data)
 Cleaned_Policy_data
 
-## Graph of the metrics
-
-Policy_data_pivoted <- Policy_Data |>
-  pivot_longer(-"Policy Type",
-               names_to = "Metric",
-               values_to = "Values"
-               )
-
-Policy_data_graph <- Policy_data_pivoted |>
-  ggplot(mappings = aes(x = Metric, y = Values, fill = 'Policy Type')) +
-  geom_bar(stat = 'identity', position = "dodge")
-
-Policy_data_graph
