@@ -1,26 +1,258 @@
 ---
-title: "Creative Destruction as Growth"
-author: "Raghav Bhatia"
-format: html
+title: "Creative Destruction as a Guide for Growth Policy"
+subtitle: "A stable equilibrium policy analysis for reallocating R&D investment across firms"
+author: 
+  - Raghav Bhatia
+thanks: "Code and data are available at: https://github.com/1raghav-bhatia/Toronto_Housing_subsidies.git."
+"SSRP is available at:
+  
+date: February 14, 2024
+date-format: long
+abstract: This project replicates the work of [@paper] by using an economic model of R&D investment as an impetus to innovation and aggregate growth. The main phenomenon replicated by the model is 'creative destruction', which in this analysis reallocates R&D resources from less efficient to more efficient firms. Using this model's results from [Acemoglu], we then compare the effects of different policy recommendations on innovation (R&D) investment, and real growth. We can use such an analysis to conclude the optimal direction of policy initiatives.
+
+format: pdf
+toc: true
+number-sections: true
+bibliography: references.bib
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(knitr)
+library(janitor)
+library(lubridate)
+library(dplyr)
+library(tidyr)
 ```
 
-You can add options to executable code like this 
+
+## Introduction
+
+Creative destruction is the term economists have given to explain the growth process within a free market. Even though it suggests a connotation with destruction, in reality, the phenomenon refers to growth through constant change. The phenomenon refers to the ingrained ability of the free market system to accommodate growth by allowing new firms to innovate off the technology of old firms. Because of this, new firms end up displacing existing firms, leading to a gain for the new firms at the expense of old firms, while overall benefiting society through enhanced growth. 
+
+This force is perhaps the biggest contributor to economic growth, which is why the replicated paper [@paper] builds a comprehensive economic model to replicate the dynamics of creative destruction and growth. The main thesis of the paper revolves around measuring R&D resource allocation across firms segmented by their productivity levels. It focuses on R&D resource allocation specifically because it is one of the best measures we know of the input to producing 'innovation'. 
+
+Innovation is paramount to explaining creative destruction as it's the main cause of such
+a process. When firms in an economy innovate off existing products, they displace the existing firm structure within that industry, leading to a temporary shock followed by an increase in long term productivity. As a result, R&D resources exchange hands within an economy from less productive to more productive uses. This long term productivity impact is captured by an increase in the growth rate. 
+
+Motivated by replicating such a mechanism, the model I consider models the R&D investment by a firm and provides a direct link for investment and product quality improvement, an
+important proxy to innovation. This in turn leads to certain firms in the economy displacing others, and therefore a reallocation of resources. Finally, this process happening over a long time frame aggregates all the product quality improvements to boost economic growth. 
+
+The first part of our analysis is focused on testing the model's fit with the general economy wide data, specific to our analysis. This includes moments such as:
+
+    1. Firm exit rates - These measure the proportion of firms that are displaced by the          creative destruction process. 
+    2. R&D to Sales (Innovation Rate) - This measures R&D spend as a ratio of total sales         and is an estimate of the estimand - Innovation Rate. The innovation rate is simply
+       a measure of the firms innovation per product line. It aims to be a comaparable            measure for innovation by firms.
+    3. Employment and GDP Growth - These moments are used to capture the main goal of the         creative destruction process, that is, economic growth. By matching up the moments,        I am able to ascertain whether the model is able to predict the connection between         creative destruction and growth. 
+  
+Having the above model which models innovation as product quality improvements and the creative destruction process of reallocation of resources allows us to test various counter factual policy recommendations targeted at boosting the innovation process. This constitutes the second part of our analysis where we consider the impacts of different
+policies on economy wide metrics such as a self defined "innovation rate" by firm, creative destruction rate, and growth rate. 
+
+The rest of the paper is organized as follows. Part 2 goes into a detailed discussion about the data sets used to derive our moment estimates. We also consider various measures that we will be tracking throughout the paper. Part 3 discusses the results of our analyses where we compare the model and data moment data for 10 moments. We also consider the results of various counterfactual economic policies using the model. Finally, part 4 includes a discussion of our analysis, points out certain limitations, and concludes the paper.
+
+
+## Data {#sec-data}
+
+```{r}
+
+#| echo: false
+#| warning: false
+#| message: false
+#| include: false
+
+#Reading the cleaned data files.
+
+Model_Data_Moments <- read_csv("outputs/data/Model_Data_Moments_cleaned.csv")
+Exit_rate_Moments <- read_csv("outputs/data/Exit_rate_Moments.csv")
+Innovation_Rate_Moments <- read_csv("outputs/data/Innovation_Rate_Moments.csv")
+Growth_rate_moments <- read_csv("outputs/data/Growth_rate_moments.csv")
+Baseline_Policy_Data <- read_csv("outputs/data/Baseline_Policy_Data.csv")
+Incumbent_Subsidy_Policy_Data <- read_csv("outputs/data/Incumbent_Subsidy_Policy_Data.csv")
+Optimal_Tax_Policy_Data <- read_csv("outputs/data/Optimal_Tax_Policy_Data.csv")
+Policy_Data <- read_csv("outputs/data/Policy_Data.csv")
+```
+
+The data was sourced from the replication package [@replication_package] of the paper being replicated "Innovation, Reallocation and Growth", American Economic Review 2018, 108(11): 3450–3491 by Daron Acemoglu, Ufuk Akcigit, Harun Alp, Nicholas Bloom, and William Kerr [@paper].The data comes from the Baseline/moment and Baseline/output folders and comprises of the datasets 'baselineMoments' [@data_moments], 'targeted_moments-baseline' [@Model_and_data_moments], and 'policies-baseline' [@policy_data]. The Data was last updated on 15th February 2024. The data was downloaded, cleaned and analyzed using R [@citeR] and its supported functionalities which are accessed through the packages tidyverse [@tidyverse], dplyr [@dplyr], ggplot2 [@ggplot2], janitor [@janitor], tibble [@tibble], knitr [@knitr], readr [@readr], and tidyr [@tidyr].   
+
+### Overview
+
+The moment estimates data could not be computed from the original data sets as they were missing from the replication package which is why we used the moments data from the authors replication packages. For this, consider the dataset 'targeted_moments-baseline' [@Model_and_data_moments]. This dataset contains the model and data's moment estimates for economic variables such as: 
+1. Firm exit rate (by firm age-size)
+2. Employment Growth (by firm age-size)
+3. Sales Growth (by firm age-size)
+4. R&D to Sales (by firm age-size)
+5. Aggregate Growth
+
+The first 4 variables are further subdivided based on firm age and size. For firm size, the data distinguishes this metric by whether the firm is large (500+ employees) or small (less than 500 employees). The age is not total age but rather firm age since its data began to be collected in the CMF which is why the classifications are 0-9 years and 10+ years. For our moment data, we only consider the subdivisions:
+1. Small Young
+2. Small Old
+3. Big Old
+
+**Data Cleaning** 
+
+The data was cleaned by first converting the txt file into a csv file to get tabular form. Further, I had to change some column names to reflect the variable. Then, from all the moment data, I was able to divide the data into separate moment data such as:
+1. Firm Exit Rate moment data
+2. R&D to Sales (Innovation Rate) moment data
+3. Growth Rate Moment Data
+
+**Measurement** 
+The reason we are collecting specifically the above moments data is because firstly R&D to sales is a measure of the innovation rate which gives a metric of innovation in the economy. The higher this rate, the higher the reallocation of resources and displacement of firms, which is given by the firm exit rate data. Subsequently, the high both these metrics should signal an higher growth rate in the future, which is what the Growth rate Moment Data gives.
 
 ```{r}
 #| echo: false
-2 * 2
+#| warning: false
+#| message: false
+#| eval: true
+#| label: table-Model-data-moments
+#| tbl-cap: Model and Data Estimated Moments
+
+# Gives a table of households paying market rent.
+Cleaned_Model_Data_Moments <- Kable(Model_Data_Moments)
+head(Cleaned_Model_Data_Moments)
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+
+### Policy Recommendations Data
+
+The policy recommendations data comes directly from using the model over various counterfactual policy scenarios (such as a R&D subsidy of 1% of GDP or an operations tax of 10%). We use the model from the paper [@paper] and plug in various policy scenarios to get the following measures:
+
+1. Innovation Rate (Entry Firm) (xEntry)
+2. Innovation Rate (High type firm) (xhigh)
+3. Innovation Rate (Low type firm) (xhow)
+4. Creative Destruction rate (tau)
+5. Growth Rate (growth)
+
+**Measurement**
+The innovation rate gives the rate of innovation by a firm as a percentage of their total product lines (sales). This measure forms the most important metric of gauging the degree of innovation by a firm. In the model, due to certain model specific dynamics, the the rates are segmented by whether a firm is a new entrant into the market, a high type (highly productive) firm, or lowly productive (low type) firm. This demarcation is needed for R&D resources in the model to flow in between different types of firms.
+
+The creative destruction rate gives a measure of innovation related exits in the market. It gives the degree of creative destruction, and therefore the degree of reallocation of resources within the economy. 
+
+Finally, the growth rate provides the final measure of this creative destruction process, and provides the definitive metric against which we evaluate each policy proposal.
+
+**Policy Proposals**
+There are 3 policy proposals considered in the data:
+1. The baseline case without any intervention
+2. The current incumbent intervention of R&D subsidies
+3. A proposed operations tax
+
+The baseline case contains no interventions, whereas the 2nd case entails a R&D subsidy to manufacturers, the total value of which is 1% of GDP. The proposed operations tax through is 70% on operations, and while it seems a bit unrealistic, we put off discussing it till the discussions section. 
+
+**Data Cleaning**
+The data was sourced from policies-baseline which is a text file. This was converted into a csv and subsequently we filtered out data to get specifically the 5 measures mentioned above under the 3 policy proposals. This data was then combined to give the definitive dataset.
+
+## Results
+
+### Comparing the Moments Estimates from the Dataset to the Model's
+
+The results of the model's moment estimates versus the dataset's for the three categories:
+1. Firm Exit Rates
+2. R&D to Sales (Innovation Rate)
+3. Growth Rates
+are given below:
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: table-moment_estimates_results
+#| tbl-cap: Moment estimates Compared to Datasets versus model
+
+## Tables for results section 'Comparing the moments estimates from the datasets to the
+## models'
+
+Cleaned_Exit_Rate_Moments <- kable(Exit_rate_Moments)
+Cleaned_Exit_Rate_Moments
+
+Cleaned_Innovation_Rate_Moments <- kable(Innovate_Rate_Moments)
+Cleaned_Innovation_Rate_Moments
+
+Cleaned_Growth_Rate_Moments <- kable(Growth_rate_moments)
+Cleaned_Growth_Rate_Moments
+```
+
+Upon graphing the observations, we observe that the dataset's moments match up well with the model's moments. We also note a similar trend across the 3 graphs, indicating a high degree of correlation across the three moments within each category (for example small young). This validates not only our analysis, but also the model's ability to capture relationships within the economy.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: true
+#| label: fig-Moments
+#| tbl-cap: Figure of the moments data
+
+## Graphs for each moment table 
+
+Exit_rate_graph <- Exit_rate_Moments |>
+  ggplot(mapping = aes(x = Description)) + 
+  geom_bar(aes(y = Model), stat = "identity", fill = "red", position = "dodge2", alpha = 0.25) +
+  geom_bar(aes(y = Data), stat = "identity", fill = "blue", position = "dodge2", alpha = 0.25) +
+  labs(x = "Economic Metric", y = "Moment Value") +
+  ggtitle("Exit Rate Moment across firm types") +
+  theme(legend.position = "bottom")
+
+Exit_rate_graph
+
+Innovation_rate_graph <- Innovate_Rate_Moments |>
+  ggplot(mapping = aes(x = Description)) + 
+  geom_bar(aes(y = Model), stat = "identity", fill = "red", position = "dodge2", alpha = 0.25) +
+  geom_bar(aes(y = Data), stat = "identity", fill = "blue", position = "dodge2", alpha = 0.25) +
+  labs(x = "Economic Metric", y = "Moment Value") +
+  ggtitle("Innovation Rate Moment across firm types") +
+  theme(legend.position = "bottom")
+Innovation_rate_graph
+
+Growth_rate_graph <- Growth_rate_moments|>
+  ggplot(mapping = aes(x = Description)) + 
+  geom_bar(aes(y = Model), stat = "identity", fill = "red", position = "dodge2", alpha = 0.25) +
+  geom_bar(aes(y = Data), stat = "identity", fill = "blue", position = "dodge2", alpha = 0.25) +
+  labs(x = "Economic Metric", y = "Moment Value") +
+  ggtitle("Growth Rate Moment across firm types") +
+  theme(legend.position = "bottom") +
+  guides(x = guide_axis(angle = 10))
+
+Growth_rate_graph
+```
+
+
+
+### Comparing the impact of different policies
+
+From our analysis conducted, we find the values of the 5 measures under the 3 different policy scenarios. 
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| eval: True
+
+## The results Policy analysis section's table
+
+Cleaned_Policy_data <- kable(Policy_Data)
+Cleaned_Policy_data
+
+```
+
+Upon observing the values of the innovation rates by firm type, we find a strong preference for the optimal tax policy recommendation over the baseline case and subsidies case.
+
+## Discussion
+
+We discuss the following features of the model:
+
+1. Firstly, we find a good fit of the model's implied moments with the data's moments. This shows that the model is good at modelling the phenomenon of creative destruction within the economy.
+2. The data also unearths a certain effect within the economy. This is called the selection effect which arises from the interplay of endogenous exit and innovation, coupled with transitions from high to low type firms, which determines the number of active product lines operated by high type firms. 
+3. We can use the model, to test various counterfactual policy recommendations. This forms the sort of A/B test that we're looking for, in order to assess the impact of different policy recommendations. We find that the implied tax performs well as a policy recommendation as it achieves the highest growth rate (2.54%) as opposed to (2.34%) from the next best alternative. 
+
+These positive results back the our results and also give a direction for policy in the economy.
+
+A limitation of our approach though are the unrealistic policy recommendations of the study. For example, we evaluated a tax proposal of 70% which is not implementable in real life. This gives a very unrealistic policy guideline, though works to illustrate the working of these policy mechanisms. 
+
+Some ethical concerns raised by our project is that it's results can have potentially harmful impacts to those workers working for struggling firms. A tax that high would put those workers out of work and result in massive layoffs. Though we assume that the workers will get reallocated, in the real world such job transitions are painful, which is why this paper's proposals should only be implemented after including every affected interest group in its discussions.
+
+\newpage
+
+## References
